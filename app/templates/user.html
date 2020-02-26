@@ -10,7 +10,11 @@
                 {% if user.last_seen %}<p>Last seen on: {{ user.last_seen }}</p>{% endif %}
                 {% if user == current_user %}
                     <p><a href="{{ url_for('edit_profile') }}">Edit your profile</a></p>
-                {% endif %}
+                    {% elif not current_user.is_following(user) %}
+                    <p><a href="{{ url_for('follow', username=user.username) }}">Follow</a></p>
+                    {% else %}
+                    <p><a href="{{ url_for('unfollow', username=user.username) }}">Unfollow</a></p>
+                    {% endif %}
             </td>
         </tr>
     </table>

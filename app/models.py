@@ -11,14 +11,31 @@ from hashlib import md5
 def load_user(id):
     return User.query.get(int(id))
 
+# 定义关联表
+followers = db.Table('followers',
+    db.Column('follower_id', db.Integer, db.ForeignKey('user.id')),
+    db.Column('followed_id', db.Integer, db.ForeignKey('user.id'))
+)
+
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), index=True, unique=True)
     email = db.Column(db.String(120), index=True, unique=True)
     password_hash = db.Column(db.String(128))
-    posts = db.relationship('Post', backref='author', lazy='dynamic')
     about_me = db.Column(db.String(140))
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    posts = db.relationship('Post', backref='author', lazy='dynamic')
+    # 对应关系：左表 - 关联表 - 右表
+    # 在这里的关系是 左 关注 右
+    followed = db.relationship( # 左表就是自己
+        'User', # 右表名
+        secondary = followers, # 关联表对象
+        primaryjoin = (followers.c.follower_id == id), #关联表关联到左侧实体的条件
+        secondaryjoin = (followers.c.followed_id == id), #关联表关联到右侧实体的条件
+        lazy = 'dynamic',
+        backref = db.backref('followers', lazy='dynamic')
+    )
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
@@ -33,6 +50,26 @@ class User(UserMixin, db.Model):
         digest = md5(self.email.lower().encode('utf-8')).hexdigest()
         return 'https://secure.gravatar.com/avatar/{}?d=identicon&s={}'.format(
             digest, size)
+
+    def follow(self, user):
+        if not self.is_following(user):
+            self.followed.append(user)
+    
+    def unfollow(self, user):
+        if self.is_following(user):
+            self.followed.remove(user)
+    
+    # 这里的过滤：左侧是自己User，右侧是传入的user对象
+    def is_following(self, user):
+        return self.followed.filter(followers.c.followed_id == user.id).count() > 0
+
+    # 联表查询，获得post表中，user_id是自己关注的user的id的post记录
+    def followed_posts(self):
+        followed = Post.query.join(
+            followers, (followers.c.followed_id == Post.user_id)).filter(
+                followers.c.follower_id == self.id)
+        own = Post.query.filter_by(user_id=self.id)
+        return followed.union(own).order_by(Post.timestamp.desc())
 
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
