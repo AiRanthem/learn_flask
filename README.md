@@ -53,10 +53,23 @@ notes:
     # 联表查询，获得post表中，user_id是自己关注的user的id的post记录
     def followed_posts(self):
         followed = Post.query.join(followers,(followers.c.followed_id == Post.user_id)) \
-                         .filter(followers.c.follower_id == self.id)
+                        .filter(followers.c.follower_id == self.id)
         own = Post.query.filter_by(user_id = self.id)
         return followed.union(own).order_by(Post.timestamp.desc())
     ```
+    7. 分页查询：
+    ``` python
+    user.followed_posts.paginate(page, limit, error_process)
+    ```
+    第三个参数为True，找不到时会返回404；否则返回空列表。
+    paginate返回的是Pagination对象，有五个比较重要的属性：
+    * items：查询到的对象列表
+    * has_next：有后续页面为真
+    * has_prev：有前置页面为真
+    * next_num：后续页码
+    * prev_num：前置页码
+    8. 
+
 4. 单元测试：通过unittest包。参看示例[test.py](./app/test.py)
 
 
