@@ -71,7 +71,44 @@ notes:
     8. 
 
 4. 单元测试：通过unittest包。参看示例[test.py](./app/test.py)
+5. 发送邮件
+    使用flask_mail插件。导入见__init__，发送邮件的代码如下：
+    ``` python
+    from flask_mail import Message
+    from app import mail
+    msg = Message('test subject', sender=app.config['ADMINS'][0],
+    recipients=['your-email@example.com'])
+    msg.body = 'text body'
+    msg.html = '<h1>HTML body</h1>'
+    mail.send(msg)
 
+    ```
+6. JWT：```import jwt```
+    1. 生成JWT:
+        ``` python
+        token = jwt.encode({'a': 'b'}, # claim
+        'my-secret',# secret key
+        algorithm='HS256')
+        ```
+7. 渲染模板
+    * render_template可以生成任何字符串内容，甚至用于发送邮件
+    * url_for的参数 *_external* 设置为True则可以生成绝对路径。否则是相对路径 
+8. 异步处理。示例：
+    ``` python
+    from threading import Thread
+    # ...
+
+    def send_async_email(app, msg):
+        with app.app_context():
+            mail.send(msg)
+
+    def send_email(subject, sender, recipients, text_body, html_body):
+        msg = Message(subject, sender=sender, recipients=recipients)
+        msg.body = text_body
+        msg.html = html_body
+        Thread(target=send_async_email, args=(app, msg)).start()
+    ```
+    新的线程不共享上下文，需要传递app对象
 
 logs:
 
@@ -79,3 +116,5 @@ logs:
 2. Feb.24 完善数据库，完成登陆(ch.4~5)
 3. Feb.25 完成注册、个人主页、错误处理和日志(ch.5~7)
 4. Feb.26 完成关注，添加单元测试(ch.8)
+5. Feb.27 完成分页显示(ch.9)
+6. Feb.28 完成邮件支持，JWT，异步发送邮件(ch.10)
