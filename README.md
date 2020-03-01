@@ -71,6 +71,27 @@ notes:
     8. 
 
 4. 单元测试：通过unittest包。参看示例[test.py](./app/test.py)
+    更新：在使用工厂模式后，可以更加安全方便地进行单元测试。
+    ``` python
+    class TestConfig(Config):
+        TESTING = True
+        SQLALCHEMY_DATABASE_URI = 'sqlite://'
+
+    class UserModelCase(unittest.TestCase):
+        def setUp(self):
+            # 为每次测试创建一个应用
+            self.app = create_app(TestConfig)
+            # 建立一个应用上下文以使得db等对象可以工作（它们依赖应用上下文）
+            self.app_context = self.app.app_context()
+            self.app_context.push()
+            db.create_all()
+
+        def tearDown(self):
+            # 清除数据库和应用上下文
+            db.session.remove()
+            db.drop_all()
+            self.app_context.pop()
+        ```
 5. 发送邮件
     使用flask_mail插件。导入见__init__，发送邮件的代码如下：
     ``` python
@@ -109,6 +130,38 @@ notes:
         Thread(target=send_async_email, args=(app, msg)).start()
     ```
     新的线程不共享上下文，需要传递app对象
+9. Ajax：示例见[_post.html](./app/templates/_posts.html)
+10. Bluepring：
+    用于封装应用特定功能的组件
+    1. 建立一个python包
+    2. 在包的__init__模块中创建Blueprint实例
+        ``` python
+        from flask import Blueprint
+        bp = Blueprint('name',__name__)
+        from app.module import files
+        ```
+    3. 向应用注册blueprint:应用的__init__文件中：
+        ``` python
+        from app.errors import bp as errors_bp
+        app.register_blueprint(errors_bp)
+        ```
+    4. 如果之前引用了模块，移除之。
+    5. 替代的装饰器
+        * bp.app_errorhandler <- app.errorhandler
+        * bp.route <- @app.route
+    6. url_for函数`url_for('name')`需要修改为`url_for('bp.name')`
+11. 修改为app factory模式：
+    1. app.__init__中需要对插件注册进行二步修改，然后写一个app工厂函数。该工厂函数需要接收配置类作为参数，这样可以动态修改配置而不会对开发有影响。
+    2. 需要使用app的地方用bp和current_app代替
+    3. 由于current_app是一个全局代理变量，如果遇到需要传递app对象的情况，需要使用`current_app._get_current_object()`
+    4. 如果某些模块需要初始化时注册app，或是写方法时需要使用app的修饰器，则将注册过程和方法包装在一个注册器方法中，这个注册器方法里面实现方法。在入口文件中，生产app对象后调用注册方法即可。
+
+12. 环境变量：可以写在`.env`文件中，然后在config.py读取环境变量之前使用dotenv.load_dotenv()读取之。
+13. 依赖文件：老生常谈地两行代码
+    ``` bash
+    pip freeze > requirements.txt
+    pip install -r requirements.txt
+    ```
 
 logs:
 
@@ -118,3 +171,5 @@ logs:
 4. Feb.26 完成关注，添加单元测试(ch.8)
 5. Feb.27 完成分页显示(ch.9)
 6. Feb.28 完成邮件支持，JWT，异步发送邮件，美化，时间显示(ch.10~12)
+7. Feb.29 完成国际化与Ajax(ch.13~14)
+8. Mar.1  完成应用结构优化--Blueprint，Factory和单元测试等。(ch.15)

@@ -1,5 +1,8 @@
 import os
+from dotenv import load_dotenv
+
 basedir = os.path.abspath(os.path.dirname(__file__))
+load_dotenv(os.path.join(basedir, '.env'))
 
 class Config():
     # Common
@@ -20,3 +23,6 @@ class Config():
 
     # for posts
     POSTS_PER_PAGE = 25
+
+    # for global
+    LANGUAGES = ['en', 'zh']

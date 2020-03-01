@@ -1,18 +1,27 @@
 from datetime import datetime, timedelta
 import unittest
-from app import app, db
+from app import db, create_app
 from app.models import User, Post
+from config import Config
+
+class TestConfig(Config):
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = 'sqlite://'
 
 class UserModelCase(unittest.TestCase):
     def setUp(self):
-        # 在内存中建立sqlite数据库
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
+        # 为每次测试创建一个应用
+        self.app = create_app(TestConfig)
+        # 建立一个应用上下文以使得db等对象可以工作（它们依赖应用上下文）
+        self.app_context = self.app.app_context()
+        self.app_context.push()
         db.create_all()
 
     def tearDown(self):
-        # 清除数据库
+        # 清除数据库和应用上下文
         db.session.remove()
         db.drop_all()
+        self.app_context.pop()
 
     def test_password_hashing(self):
         u = User(username='susan')
