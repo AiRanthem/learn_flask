@@ -162,6 +162,7 @@ notes:
     pip freeze > requirements.txt
     pip install -r requirements.txt
     ```
+14. 全文搜索：因为时间关系，暂时跳过了这一部分。文档链接备用[全文搜索](https://github.com/luhuisicnu/The-Flask-Mega-Tutorial-zh/blob/master/docs/%e7%ac%ac%e5%8d%81%e5%85%ad%e7%ab%a0%ef%bc%9a%e5%85%a8%e6%96%87%e6%90%9c%e7%b4%a2.md)
 
 logs:
 
