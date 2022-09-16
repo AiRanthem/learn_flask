@@ -22,7 +22,7 @@ idna==2.9
 itsdangerous==1.1.0
 Jinja2==2.11.1
 lesscpy==0.14.0
-Mako==1.1.1
+Mako==1.2.2
 MarkupSafe==1.1.1
 ply==3.11
 PyJWT==1.7.1
